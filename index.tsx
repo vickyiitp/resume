@@ -13,3 +13,10 @@ root.render(
     <App />
   </React.StrictMode>
 );
+
+// Remove the initial loader once React has mounted
+const loader = document.getElementById('loader');
+if (loader) {
+    loader.style.opacity = '0';
+    setTimeout(() => loader.remove(), 300); // Allow for fade-out transition
+}

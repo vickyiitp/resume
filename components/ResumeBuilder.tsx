@@ -4,6 +4,7 @@ import type { ResumeData, AIFeedbackData, FormErrors } from '../types';
 import { INITIAL_RESUME_DATA, SAMPLE_RESUME_DATA } from '../constants';
 import { getResumeFeedback, suggestJobTitles } from '../services/geminiService';
 import { useLocalStorage } from '../hooks/useLocalStorage';
+import type { ToastData } from '../App';
 
 import ResumeForm from './ResumeForm';
 import ResumePreview from './ResumePreview';
@@ -31,9 +32,10 @@ const STEPS = [
 
 interface ResumeBuilderProps {
   mobileView: 'editor' | 'preview';
+  setToast: (toast: ToastData | null) => void;
 }
 
-const ResumeBuilder: React.FC<ResumeBuilderProps> = ({ mobileView }) => {
+const ResumeBuilder: React.FC<ResumeBuilderProps> = ({ mobileView, setToast }) => {
     const [resumeData, setResumeData] = useLocalStorage<ResumeData>('resumeData', INITIAL_RESUME_DATA);
     const [currentStep, setCurrentStep] = useState(0);
     const [errors, setErrors] = useState<FormErrors>({});
@@ -61,12 +63,11 @@ const ResumeBuilder: React.FC<ResumeBuilderProps> = ({ mobileView }) => {
         try {
             const result = await getResumeFeedback(resumeData, targetJob);
             setFeedback(result);
+            setToast({ message: 'AI analysis complete!', type: 'success' });
         } catch (err) {
-            if (err instanceof Error) {
-                setErrorFeedback(err.message);
-            } else {
-                setErrorFeedback('An unknown error occurred.');
-            }
+            const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.';
+            setErrorFeedback(errorMessage);
+            setToast({ message: errorMessage, type: 'error' });
         } finally {
             setIsLoadingFeedback(false);
         }
@@ -80,11 +81,9 @@ const ResumeBuilder: React.FC<ResumeBuilderProps> = ({ mobileView }) => {
             const titles = await suggestJobTitles(resumeData);
             setSuggestedJobs(titles);
         } catch (err) {
-             if (err instanceof Error) {
-                setErrorFeedback(err.message);
-            } else {
-                setErrorFeedback('An unknown error occurred while suggesting titles.');
-            }
+            const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred while suggesting titles.';
+             setErrorFeedback(errorMessage);
+             setToast({ message: errorMessage, type: 'error' });
         } finally {
             setIsSuggestingJobs(false);
         }
@@ -94,6 +93,7 @@ const ResumeBuilder: React.FC<ResumeBuilderProps> = ({ mobileView }) => {
         setResumeData(SAMPLE_RESUME_DATA);
         setCurrentStep(0);
         setErrors({});
+        setToast({ message: 'Sample data loaded.', type: 'success' });
     }
     
     const clearAllData = () => {
@@ -103,6 +103,7 @@ const ResumeBuilder: React.FC<ResumeBuilderProps> = ({ mobileView }) => {
             setErrors({});
             setFeedback(null);
             setSuggestedJobs([]);
+            setToast({ message: 'All data has been cleared.', type: 'success' });
         }
     }
 
@@ -124,6 +125,7 @@ const ResumeBuilder: React.FC<ResumeBuilderProps> = ({ mobileView }) => {
                     setCurrentStep={setCurrentStep}
                     errors={errors}
                     setErrors={setErrors}
+                    setToast={setToast}
                 />
             </div>
 
@@ -146,29 +148,28 @@ const ResumeBuilder: React.FC<ResumeBuilderProps> = ({ mobileView }) => {
                     <Card>
                         <h2 className="text-xl font-bold mb-4">AI Analysis</h2>
                         <div className="space-y-4">
-                             <div className="flex flex-col sm:flex-row gap-2">
-                                 <Input
-                                    label="Target Job Title"
-                                    value={targetJob}
-                                    onChange={(e) => setTargetJob(e.target.value)}
-                                    placeholder="e.g., Senior Software Engineer"
-                                    className="flex-grow"
-                                />
-                                 <div className="flex gap-2 self-end h-fit">
-                                    <Button onClick={handleSuggestJobs} disabled={isSuggestingJobs} variant="secondary" icon={<ClipboardListIcon className="w-4 h-4" />}>
-                                        {isSuggestingJobs ? 'Thinking...' : 'Suggest Titles'}
-                                    </Button>
-                                    <Button onClick={handleGetFeedback} disabled={isLoadingFeedback} icon={<SparklesIcon className="w-4 h-4" />}>
-                                        {isLoadingFeedback ? 'Analyzing...' : 'Get Feedback'}
-                                    </Button>
-                                 </div>
+                            <Input
+                                id="target-job"
+                                label="Target Job Title"
+                                value={targetJob}
+                                onChange={(e) => setTargetJob(e.target.value)}
+                                placeholder="e.g., Senior Software Engineer"
+                            />
+                            <div className="flex gap-2 justify-end">
+                                <Button onClick={handleSuggestJobs} disabled={isSuggestingJobs} variant="secondary" icon={<ClipboardListIcon className="w-4 h-4" />}>
+                                    {isSuggestingJobs ? 'Thinking...' : 'Suggest Titles'}
+                                </Button>
+                                <Button onClick={handleGetFeedback} disabled={isLoadingFeedback} icon={<SparklesIcon className="w-4 h-4" />}>
+                                    {isLoadingFeedback ? 'Analyzing...' : 'Get Feedback'}
+                                </Button>
                             </div>
+                            
                             {suggestedJobs.length > 0 && (
                                 <div className="pt-2">
                                     <p className="text-sm font-medium text-slate-600 mb-2">Suggested Job Titles:</p>
                                     <div className="flex flex-wrap gap-2">
-                                        {suggestedJobs.map(job => (
-                                            <button key={job} onClick={() => setTargetJob(job)} className="px-3 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full hover:bg-blue-200 transition-colors">
+                                        {suggestedJobs.map((job, index) => (
+                                            <button key={`${job}-${index}`} onClick={() => setTargetJob(job)} className="px-3 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full hover:bg-blue-200 transition-colors">
                                                 {job}
                                             </button>
                                         ))}
@@ -182,6 +183,7 @@ const ResumeBuilder: React.FC<ResumeBuilderProps> = ({ mobileView }) => {
                                 feedback={feedback} 
                                 isLoading={isLoadingFeedback} 
                                 setResumeData={setResumeData}
+                                setToast={setToast}
                             />
                         </div>
                     </Card>

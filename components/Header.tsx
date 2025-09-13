@@ -10,11 +10,11 @@ const Header: React.FC<HeaderProps> = ({ mobileView, setMobileView }) => {
     <header className="bg-white shadow-sm sticky top-0 z-20">
       <div className="container mx-auto px-4 py-3 flex justify-between items-center">
         <div className="flex flex-col items-start leading-none">
-            <h1 className="text-3xl font-extrabold text-slate-800">
-                Resume
+            <h1 className="text-2xl font-extrabold text-slate-800">
+                AI Resume Architect
             </h1>
             <span className="text-lg font-bold text-blue-600 font-dancing-script -mt-1">
-                vickyiitp
+                by vickyiitp
             </span>
         </div>
         

@@ -1,15 +1,27 @@
-import { GoogleGenAI, Type } from "@google/genai";
 import type { ResumeData, AIFeedbackData } from '../types';
+import { Type, GenerateContentResponse } from "@google/genai";
 
-let ai: GoogleGenAI | null = null;
+const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+const API_BASE_URL = isLocal ? 'http://localhost:3000/api' : '/api';
 
-const getAI = (): GoogleGenAI => {
-    // Initialize the AI client only once.
-    if (!ai) {
-        ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
-    }
-    return ai;
+
+async function generateContent(model: string, contents: any, config = {}): Promise<GenerateContentResponse> {
+  const response = await fetch(`${API_BASE_URL}/generate`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ model, contents, config }),
+  });
+
+  if (!response.ok) {
+    const errorBody = await response.json();
+    throw new Error(errorBody.error || `Request failed with status ${response.status}`);
+  }
+
+  return response.json();
 }
+
 
 const feedbackSchema = {
     type: Type.OBJECT,
@@ -50,7 +62,6 @@ const feedbackSchema = {
 
 export const getResumeFeedback = async (resumeData: ResumeData, targetJob: string): Promise<AIFeedbackData> => {
     try {
-        const ai = getAI();
         const prompt = `
             Analyze the following resume data for a candidate targeting a "${targetJob}" position. 
             Provide a score from 0-100 on how well it fits the role. 
@@ -59,13 +70,9 @@ export const getResumeFeedback = async (resumeData: ResumeData, targetJob: strin
             Resume Data: ${JSON.stringify(resumeData)}
         `;
 
-        const response = await ai.models.generateContent({
-            model: "gemini-2.5-flash",
-            contents: prompt,
-            config: {
-                responseMimeType: "application/json",
-                responseSchema: feedbackSchema,
-            },
+        const response = await generateContent("gemini-2.5-flash", prompt, {
+            responseMimeType: "application/json",
+            responseSchema: feedbackSchema,
         });
         
         const jsonText = response.text.trim();
@@ -73,67 +80,52 @@ export const getResumeFeedback = async (resumeData: ResumeData, targetJob: strin
 
     } catch (error) {
         console.error("Error getting resume feedback:", error);
-        if (error instanceof Error && error.message.includes('API key')) {
-          throw error;
-        }
-        throw new Error('Failed to get feedback from AI. Please check the console for details.');
+        throw new Error('AI analysis failed. This could be a temporary issue with the server, please try again.');
     }
 };
 
 export const enhanceBulletPoint = async (point: string): Promise<string> => {
     try {
-        const ai = getAI();
         const prompt = `
             Enhance this resume bullet point to be more impactful and action-oriented. 
             Use the STAR (Situation, Task, Action, Result) method if possible and include quantifiable results.
             Keep it as a single sentence.
             Original point: "${point}"
         `;
-        const response = await ai.models.generateContent({
-            model: "gemini-2.5-flash",
-            contents: prompt,
-        });
+        const response = await generateContent("gemini-2.5-flash", prompt);
         return response.text.trim().replace(/^"|"$/g, ''); // Remove quotes if AI adds them
     } catch (error) {
         console.error("Error enhancing bullet point:", error);
-        throw new Error('Failed to enhance bullet point.');
+        throw new Error('Failed to enhance bullet point with AI. Please try again.');
     }
 };
 
 export const generateSummary = async (resumeData: ResumeData): Promise<string> => {
     try {
-        const ai = getAI();
         const prompt = `
             Based on the following resume data, write a professional, compelling summary of 2-4 sentences.
             Highlight the key skills and experiences relevant to a senior professional role.
             Resume Data: ${JSON.stringify(resumeData)}
         `;
-        const response = await ai.models.generateContent({
-            model: "gemini-2.5-flash",
-            contents: prompt,
-        });
+        const response = await generateContent("gemini-2.5-flash", prompt);
         return response.text.trim();
     } catch (error) {
         console.error("Error generating summary:", error);
-        throw new Error('Failed to generate summary.');
+        throw new Error('Failed to generate summary with AI. Please try again.');
     }
 };
 
 export const suggestJobTitles = async (resumeData: ResumeData): Promise<string[]> => {
     try {
-        const ai = getAI();
         const prompt = `
             Based on the skills and experience in this resume, suggest 3 to 5 relevant and specific job titles.
             Return ONLY a comma-separated list of the titles.
             Resume Data: ${JSON.stringify(resumeData)}
         `;
-        const response = await ai.models.generateContent({
-            model: "gemini-2.5-flash",
-            contents: prompt,
-        });
+        const response = await generateContent("gemini-2.5-flash", prompt);
         return response.text.trim().split(',').map(title => title.trim());
     } catch (error) {
         console.error("Error suggesting job titles:", error);
-        throw new Error('Failed to suggest job titles.');
+        throw new Error('Failed to suggest job titles with AI. Please try again.');
     }
 }

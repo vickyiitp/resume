@@ -28,10 +28,10 @@ const ResumeTips: React.FC = () => {
       <Card>
         <h2 className="text-2xl font-bold mb-4 flex items-center gap-2 text-slate-800">
           <BookOpenIcon className="w-6 h-6" />
-          Master Your Resume
+          Resume Writing Guide
         </h2>
         <p className="mb-6 text-slate-600">
-          A great resume is the key to unlocking your next career opportunity. Here are some essential tips to help you craft a resume that stands out.
+          A great resume is the key to unlocking your next career opportunity. Use these essential tips to craft a document that stands out to recruiters and hiring managers.
         </p>
         <div className="space-y-4">
           {tips.map((tip, index) => (

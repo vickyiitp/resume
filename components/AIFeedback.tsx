@@ -2,6 +2,7 @@
 
 import React from 'react';
 import type { AIFeedbackData, ResumeData } from '../types';
+import type { ToastData } from '../App';
 import Button from './ui/Button';
 import { CheckCircleIcon } from './icons/CheckCircleIcon';
 import { LightbulbIcon } from './icons/LightbulbIcon';
@@ -11,9 +12,10 @@ interface AIFeedbackProps {
   feedback: AIFeedbackData | null;
   isLoading: boolean;
   setResumeData: React.Dispatch<React.SetStateAction<ResumeData>>;
+  setToast: (toast: ToastData | null) => void;
 }
 
-const AIFeedback: React.FC<AIFeedbackProps> = ({ feedback, isLoading, setResumeData }) => {
+const AIFeedback: React.FC<AIFeedbackProps> = ({ feedback, isLoading, setResumeData, setToast }) => {
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center text-center p-6 bg-slate-50 rounded-lg animate-pulse">
@@ -34,6 +36,7 @@ const AIFeedback: React.FC<AIFeedbackProps> = ({ feedback, isLoading, setResumeD
 
   const handleApplySuggestion = (change: string) => {
       setResumeData(prev => ({...prev, summary: change}));
+      setToast({ message: 'Suggestion applied successfully!', type: 'success' });
   };
 
   const scoreColor = feedback.score >= 85 ? 'text-green-600' : feedback.score >= 60 ? 'text-yellow-600' : 'text-red-600';

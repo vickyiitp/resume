@@ -2,9 +2,21 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20fill='none'%20viewBox='0%200%2024%2024'%20stroke-width='1.5'%20stroke='%232563eb'%3E%3Cpath%20stroke-linecap='round'%20stroke-linejoin='round'%20d='M9%2012h6m-6%204h6m2%205H7a2%202%200%2001-2-2V5a2%202%200%20012-2h5.586a1%201%200%2001.707.293l5.414%205.414a1%201%200%2001.293.707V19a2%202%200%2001-2%202z'%20/%3E%3C/svg%3E" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>AI Resume Architect</title>
+    <title>AI Resume Architect by vickyiitp</title>
+    <meta name="description" content="Build a job-winning resume with AI. Get personalized feedback, professional templates, and AI-powered content suggestions to land your dream job." />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="AI Resume Architect by vickyiitp" />
+    <meta property="og:description" content="Build a job-winning resume with AI. Get personalized feedback, professional templates, and AI-powered content suggestions to land your dream job." />
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:title" content="AI Resume Architect by vickyiitp" />
+    <meta property="twitter:description" content="Build a job-winning resume with AI. Get personalized feedback, professional templates, and AI-powered content suggestions to land your dream job." />
+
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     
@@ -16,7 +28,12 @@
     "uuid": "https://esm.sh/uuid@9.0.1",
     "@google/genai": "https://aistudiocdn.com/@google/genai@^1.18.0",
     "react-dom/": "https://aistudiocdn.com/react-dom@^19.1.1/",
-    "react/": "https://aistudiocdn.com/react@^19.1.1/"
+    "react/": "https://aistudiocdn.com/react@^19.1.1/",
+    "dotenv/": "https://aistudiocdn.com/dotenv@^17.2.2/",
+    "cors": "https://aistudiocdn.com/cors@^2.8.5",
+    "express": "https://aistudiocdn.com/express@^5.1.0",
+    "path": "https://aistudiocdn.com/path@^0.12.7",
+    "url": "https://aistudiocdn.com/url@^0.11.4"
   }
 }
 </script>
@@ -33,6 +50,42 @@
       .font-dancing-script {
         font-family: 'Dancing Script', cursive;
       }
+      
+      /* Initial Loader Styles */
+      #loader {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #f1f5f9; /* slate-100 */
+        z-index: 9999;
+        transition: opacity 0.3s ease-in-out;
+      }
+      .spinner {
+        width: 56px;
+        height: 56px;
+        border: 7px solid #dbeafe; /* blue-100 */
+        border-bottom-color: #3b82f6; /* blue-500 */
+        border-radius: 50%;
+        display: inline-block;
+        box-sizing: border-box;
+        animation: rotation 1s linear infinite;
+      }
+      @keyframes rotation {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+      
+      /* Toast Animation */
+      @keyframes fade-in-down {
+        from { opacity: 0; transform: translateY(-20px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      .animate-fade-in-down {
+        animation: fade-in-down 0.5s ease-out forwards;
+      }
+
       /* Print-specific styles - ROBUST METHOD */
       @media print {
         body {
@@ -117,7 +170,11 @@
     </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div id="loader">
+        <div class="spinner"></div>
+      </div>
+    </div>
     <script type="text/babel" data-type="module" src="/index.tsx"></script>
   </body>
 </html>
