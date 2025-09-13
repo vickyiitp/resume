@@ -3,8 +3,8 @@ export interface PersonalDetails {
   email: string;
   phoneNumber: string;
   location: string;
-  linkedin: string;
   website: string;
+  linkedin: string;
   photo: string | null;
 }
 
@@ -28,7 +28,7 @@ export interface Education {
   institution: string;
   degree: string;
   major: string;
-  gpa?: string;
+  gpa: string;
   startDate: string;
   endDate: string;
 }
@@ -36,15 +36,15 @@ export interface Education {
 export interface Skill {
   id: string;
   category: string;
-  names: string; // Comma-separated list of skills in this category
+  names: string;
 }
 
 export interface Project {
   id: string;
   name: string;
-  description: BulletPoint[];
   technologies: string;
   link: string;
+  description: BulletPoint[];
 }
 
 export interface Certification {
@@ -77,7 +77,6 @@ export interface VolunteerExperience {
     description: BulletPoint[];
 }
 
-
 export interface ResumeData {
   personalDetails: PersonalDetails;
   summary: string;
@@ -91,28 +90,28 @@ export interface ResumeData {
   volunteerExperience: VolunteerExperience[];
 }
 
-export interface FormErrors {
-    personalDetails?: {
-        fullName?: string;
-        email?: string;
-        phoneNumber?: string;
-        location?: string;
-    };
-    experience?: ({ jobTitle?: string; company?: string; startDate?: string; endDate?: string; description?: { point?: string }[] })[];
-    education?: ({ institution?: string; degree?: string; startDate?: string; endDate?: string; major?: string })[];
-    skills?: ({ category?: string; names?: string; })[];
-    projects?: ({ name?: string; description?: { point?: string }[] })[];
+export interface AIFeedbackPoint {
+    title: string;
+    description: string;
+    suggestedChange?: string;
 }
 
 export interface AIFeedbackData {
   score: number;
-  strengths: string[];
-  improvements: string[];
-  overallSummary: string;
+  strengths: AIFeedbackPoint[];
+  suggestions: AIFeedbackPoint[];
 }
 
+export type FormErrors = {
+  [key in keyof ResumeData]?: {
+    [key: string]: string;
+  };
+};
+
 export enum TemplateType {
-    MODERN = 'modern',
-    CLASSIC = 'classic',
-    CREATIVE = 'creative',
+  MODERN = 'modern',
+  CLASSIC = 'classic',
+  CREATIVE = 'creative',
+  EXECUTIVE = 'executive',
+  TECHNICAL = 'technical'
 }

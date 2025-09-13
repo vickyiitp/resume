@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import type { ResumeData, Experience, Education, Skill, Project, Certification, Award, Language, VolunteerExperience, BulletPoint, FormErrors } from '../types';
-import { enhanceBulletPoint } from '../services/geminiService';
+import { enhanceBulletPoint, generateSummary } from '../services/geminiService';
 
 import Input from './ui/Input';
 import Textarea from './ui/Textarea';
 import Button from './ui/Button';
 import Card from './ui/Card';
+import { Accordion } from './ui/Accordion';
+import ImageUpload from './ui/ImageUpload';
 
 import { UserIcon } from './icons/UserIcon';
 import { DocumentTextIcon } from './icons/DocumentTextIcon';
@@ -20,6 +22,7 @@ import { LanguageIcon } from './icons/LanguageIcon';
 import { VolunteerIcon } from './icons/VolunteerIcon';
 import { TrashIcon } from './icons/TrashIcon';
 import { SparklesIcon } from './icons/SparklesIcon';
+import { MagicWandIcon } from './icons/MagicWandIcon';
 
 interface ResumeFormProps {
   resumeData: ResumeData;
@@ -29,6 +32,8 @@ interface ResumeFormProps {
   errors: FormErrors;
   setErrors: React.Dispatch<React.SetStateAction<FormErrors>>;
 }
+
+const TOTAL_STEPS = 6;
 
 const validateStep = (step: number, data: ResumeData): [boolean, FormErrors] => {
     const newErrors: FormErrors = {};
@@ -56,6 +61,7 @@ const validateStep = (step: number, data: ResumeData): [boolean, FormErrors] => 
 
 const ResumeForm: React.FC<ResumeFormProps> = ({ resumeData, setResumeData, currentStep, setCurrentStep, errors, setErrors }) => {
   const [enhancingBulletId, setEnhancingBulletId] = useState<string | null>(null);
+  const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
 
   const handleSimpleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -164,12 +170,24 @@ const ResumeForm: React.FC<ResumeFormProps> = ({ resumeData, setResumeData, curr
           setEnhancingBulletId(null);
       }
   };
+
+  const handleGenerateSummary = async () => {
+    setIsGeneratingSummary(true);
+    try {
+        const summary = await generateSummary(resumeData);
+        setResumeData(prev => ({ ...prev, summary }));
+    } catch (err) {
+        alert(err instanceof Error ? err.message : 'An unknown error occurred.');
+    } finally {
+        setIsGeneratingSummary(false);
+    }
+  };
   
   const handleNext = () => {
     const [isValid, newErrors] = validateStep(currentStep, resumeData);
     setErrors(newErrors);
     if (isValid) {
-      if (currentStep < 6) setCurrentStep(currentStep + 1);
+      if (currentStep < TOTAL_STEPS) setCurrentStep(currentStep + 1);
     }
   };
 
@@ -189,22 +207,24 @@ const ResumeForm: React.FC<ResumeFormProps> = ({ resumeData, setResumeData, curr
                     <Input label="Location" name="personalDetails.location" value={resumeData.personalDetails.location} onChange={handleSimpleChange} placeholder="e.g., San Francisco, CA" />
                     <Input label="LinkedIn Profile" name="personalDetails.linkedin" value={resumeData.personalDetails.linkedin} onChange={handleSimpleChange} />
                     <Input label="Website/Portfolio" name="personalDetails.website" value={resumeData.personalDetails.website} onChange={handleSimpleChange} />
-                </div>
-                <div className="mt-4">
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Profile Photo</label>
-                    {resumeData.personalDetails.photo && (
-                        <div className="mb-2 flex items-center gap-4">
-                            <img src={resumeData.personalDetails.photo} alt="Preview" className="w-20 h-20 rounded-full object-cover"/>
-                            <Button variant="danger" onClick={() => setResumeData(p => ({...p, personalDetails: {...p.personalDetails, photo: null}}))}>Remove Photo</Button>
-                        </div>
-                    )}
-                    <Input type="file" accept="image/*" onChange={handlePhotoChange} />
+                    <div className="md:col-span-2">
+                        <ImageUpload
+                            photo={resumeData.personalDetails.photo}
+                            onPhotoChange={handlePhotoChange}
+                            onPhotoRemove={() => setResumeData(p => ({...p, personalDetails: {...p.personalDetails, photo: null}}))}
+                        />
+                    </div>
                 </div>
             </Card>
         )}
         {currentStep === 1 && (
             <Card>
-                <h2 className="text-xl font-bold mb-4 flex items-center gap-2"><DocumentTextIcon /> Professional Summary</h2>
+                <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-xl font-bold flex items-center gap-2"><DocumentTextIcon /> Professional Summary</h2>
+                    <Button variant="secondary" onClick={handleGenerateSummary} disabled={isGeneratingSummary} icon={<MagicWandIcon className="w-4 h-4" />}>
+                        {isGeneratingSummary ? 'Generating...' : 'AI Generate Summary'}
+                    </Button>
+                </div>
                 <Textarea label="" name="summary" value={resumeData.summary} onChange={handleSimpleChange} placeholder="Write a brief summary of your skills and experience." />
             </Card>
         )}
@@ -299,9 +319,8 @@ const ResumeForm: React.FC<ResumeFormProps> = ({ resumeData, setResumeData, curr
             </Card>
         )}
         {currentStep === 6 && (
-            <div className="space-y-6">
-                <Card>
-                    <h2 className="text-xl font-bold mb-4 flex items-center gap-2"><CertificateIcon /> Certifications</h2>
+            <div className="space-y-4">
+                <Accordion title="Certifications" icon={<CertificateIcon />}>
                     {resumeData.certifications.map((cert) => (
                         <Card key={cert.id} className="mb-4 relative !p-4 bg-slate-50">
                             <Button variant="danger" className="absolute top-2 right-2 p-1 h-auto text-xs" onClick={() => removeNestedItem('certifications', cert.id)}><TrashIcon className="w-4 h-4" /></Button>
@@ -313,9 +332,8 @@ const ResumeForm: React.FC<ResumeFormProps> = ({ resumeData, setResumeData, curr
                         </Card>
                     ))}
                     <Button onClick={() => addNestedItem<Certification>('certifications', { id: uuidv4(), name: '', issuer: '', date: '' })}>Add Certification</Button>
-                </Card>
-                <Card>
-                    <h2 className="text-xl font-bold mb-4 flex items-center gap-2"><AwardIcon /> Awards</h2>
+                </Accordion>
+                <Accordion title="Awards" icon={<AwardIcon />}>
                      {resumeData.awards.map((award) => (
                         <Card key={award.id} className="mb-4 relative !p-4 bg-slate-50">
                             <Button variant="danger" className="absolute top-2 right-2 p-1 h-auto text-xs" onClick={() => removeNestedItem('awards', award.id)}><TrashIcon className="w-4 h-4" /></Button>
@@ -330,9 +348,8 @@ const ResumeForm: React.FC<ResumeFormProps> = ({ resumeData, setResumeData, curr
                         </Card>
                     ))}
                     <Button onClick={() => addNestedItem<Award>('awards', { id: uuidv4(), name: '', issuer: '', date: '' })}>Add Award</Button>
-                </Card>
-                 <Card>
-                    <h2 className="text-xl font-bold mb-4 flex items-center gap-2"><LanguageIcon /> Languages</h2>
+                </Accordion>
+                <Accordion title="Languages" icon={<LanguageIcon />}>
                     {resumeData.languages.map((lang) => (
                         <Card key={lang.id} className="mb-4 relative !p-4 bg-slate-50">
                             <Button variant="danger" className="absolute top-2 right-2 p-1 h-auto text-xs" onClick={() => removeNestedItem('languages', lang.id)}><TrashIcon className="w-4 h-4" /></Button>
@@ -343,9 +360,8 @@ const ResumeForm: React.FC<ResumeFormProps> = ({ resumeData, setResumeData, curr
                         </Card>
                     ))}
                     <Button onClick={() => addNestedItem<Language>('languages', { id: uuidv4(), name: '', proficiency: '' })}>Add Language</Button>
-                </Card>
-                <Card>
-                  <h2 className="text-xl font-bold mb-4 flex items-center gap-2"><VolunteerIcon /> Volunteer Experience</h2>
+                </Accordion>
+                <Accordion title="Volunteer Experience" icon={<VolunteerIcon />}>
                   {resumeData.volunteerExperience.map((vol) => (
                     <Card key={vol.id} className="mb-4 relative !p-4 bg-slate-50">
                         <Button variant="danger" className="absolute top-2 right-2 p-1 h-auto text-xs" onClick={() => removeNestedItem('volunteerExperience', vol.id)}><TrashIcon className="w-4 h-4" /></Button>
@@ -371,7 +387,7 @@ const ResumeForm: React.FC<ResumeFormProps> = ({ resumeData, setResumeData, curr
                     </Card>
                 ))}
                     <Button onClick={() => addNestedItem<VolunteerExperience>('volunteerExperience', { id: uuidv4(), organization: '', role: '', startDate: '', endDate: '', description: [{id: uuidv4(), point: ''}] })}>Add Volunteer Role</Button>
-                </Card>
+                </Accordion>
             </div>
         )}
     </div>
@@ -384,8 +400,8 @@ const ResumeForm: React.FC<ResumeFormProps> = ({ resumeData, setResumeData, curr
         <Button onClick={handlePrev} disabled={currentStep === 0} variant="secondary">
           Previous
         </Button>
-        <Button onClick={handleNext} disabled={currentStep === 6}>
-          Next
+        <Button onClick={handleNext} disabled={currentStep === TOTAL_STEPS}>
+          {currentStep === TOTAL_STEPS ? 'Finish' : 'Next'}
         </Button>
       </div>
     </div>

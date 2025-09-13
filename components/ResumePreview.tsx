@@ -1,15 +1,17 @@
 import React from 'react';
-import type { ResumeData } from '../types';
+import type { ResumeData, TemplateType } from '../types';
 import { MailIcon } from './icons/MailIcon';
 import { PhoneIcon } from './icons/PhoneIcon';
 import { LocationIcon } from './icons/LocationIcon';
 import { LinkIcon } from './icons/LinkIcon';
+import { LinkedinIcon } from './icons/LinkedinIcon';
 
 interface ResumePreviewProps {
   resumeData: ResumeData;
+  template: TemplateType;
 }
 
-const ResumePreview = React.forwardRef<HTMLDivElement, ResumePreviewProps>(({ resumeData }, ref) => {
+const ResumePreview: React.FC<ResumePreviewProps> = ({ resumeData, template }) => {
   const { personalDetails, summary, experience, education, skills, projects, certifications, languages, awards, volunteerExperience } = resumeData;
 
   const renderContactInfo = () => {
@@ -18,10 +20,10 @@ const ResumePreview = React.forwardRef<HTMLDivElement, ResumePreviewProps>(({ re
     if (personalDetails.phoneNumber) info.push({ icon: <PhoneIcon className="w-4 h-4" />, text: personalDetails.phoneNumber, href: `tel:${personalDetails.phoneNumber}` });
     if (personalDetails.location) info.push({ icon: <LocationIcon className="w-4 h-4" />, text: personalDetails.location });
     if (personalDetails.website) info.push({ icon: <LinkIcon className="w-4 h-4" />, text: personalDetails.website, href: `https://${personalDetails.website.replace(/^https?:\/\//, '')}` });
-    if (personalDetails.linkedin) info.push({ icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"></path></svg>, text: personalDetails.linkedin, href: `https://${personalDetails.linkedin.replace(/^https?:\/\//, '')}`});
+    if (personalDetails.linkedin) info.push({ icon: <LinkedinIcon className="w-4 h-4" />, text: personalDetails.linkedin, href: `https://${personalDetails.linkedin.replace(/^https?:\/\//, '')}`});
 
     return (
-      <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 text-sm text-slate-600 mt-2">
+      <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 text-sm text-slate-600 mt-2 contact-info">
         {info.map((item, index) => (
           <div key={index} className="flex items-center gap-1.5">
             {item.icon}
@@ -38,24 +40,26 @@ const ResumePreview = React.forwardRef<HTMLDivElement, ResumePreviewProps>(({ re
     );
   };
 
-  const Section: React.FC<{ title: string; children: React.ReactNode; hasContent: boolean }> = ({ title, children, hasContent }) => {
+  const Section: React.FC<{ title: string; children: React.ReactNode; hasContent: boolean, className?: string }> = ({ title, children, hasContent, className = '' }) => {
       if (!hasContent) return null;
       return (
-        <section className="mb-4">
-          <h2 className="text-lg font-bold text-blue-800 border-b-2 border-blue-200 pb-1 mb-2 uppercase tracking-wider">{title}</h2>
+        <section className={`mb-4 ${className}`}>
+          <h2 className="text-lg font-bold border-b-2 pb-1 mb-2 uppercase tracking-wider section-title">{title}</h2>
           {children}
         </section>
       );
   }
 
+  const templateClassName = `template-${template}`;
+
   return (
-    <div ref={ref} className="bg-white p-6 shadow-lg rounded-lg border border-slate-200 text-sm font-serif">
+    <div className={`bg-white p-6 shadow-lg rounded-lg border border-slate-200 text-sm ${templateClassName}`}>
       {/* Header */}
       <header className="text-center mb-4">
         {personalDetails.photo && (
             <img src={personalDetails.photo} alt={personalDetails.fullName} className="w-24 h-24 rounded-full mx-auto mb-3 object-cover shadow-md" />
         )}
-        <h1 className="text-3xl font-bold tracking-tight text-slate-800">{personalDetails.fullName || 'Your Name'}</h1>
+        <h1 className="text-3xl font-bold tracking-tight full-name">{personalDetails.fullName || 'Your Name'}</h1>
         {renderContactInfo()}
       </header>
 
@@ -106,7 +110,7 @@ const ResumePreview = React.forwardRef<HTMLDivElement, ResumePreviewProps>(({ re
         ))}
       </Section>
 
-      <Section title="Skills" hasContent={skills.length > 0 && skills.some(s => s.category)}>
+      <Section title="Skills" hasContent={skills.length > 0 && skills.some(s => s.category)} className="skills-section">
         {skills.map((skill) => skill.category && (
           <div key={skill.id} className="flex gap-2 items-baseline mb-1">
             <h4 className="font-bold text-slate-800 w-1/3 text-right">{skill.category}:</h4>
@@ -159,6 +163,6 @@ const ResumePreview = React.forwardRef<HTMLDivElement, ResumePreviewProps>(({ re
 
     </div>
   );
-});
+};
 
 export default ResumePreview;

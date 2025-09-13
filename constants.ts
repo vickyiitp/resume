@@ -1,5 +1,5 @@
-import type { ResumeData } from './types';
 import { v4 as uuidv4 } from 'uuid';
+import type { ResumeData } from './types';
 
 export const INITIAL_RESUME_DATA: ResumeData = {
   personalDetails: {
@@ -7,8 +7,8 @@ export const INITIAL_RESUME_DATA: ResumeData = {
     email: '',
     phoneNumber: '',
     location: '',
-    linkedin: '',
     website: '',
+    linkedin: '',
     photo: null,
   },
   summary: '',
@@ -24,41 +24,42 @@ export const INITIAL_RESUME_DATA: ResumeData = {
 
 export const SAMPLE_RESUME_DATA: ResumeData = {
   personalDetails: {
-    fullName: 'Alex Doe',
-    email: 'alex.doe@example.com',
-    phoneNumber: '415-555-0101',
+    fullName: 'Jane Doe',
+    email: 'jane.doe@example.com',
+    phoneNumber: '123-456-7890',
     location: 'San Francisco, CA',
-    linkedin: 'linkedin.com/in/alexdoe',
-    website: 'alexdoe.dev',
-    photo: null,
+    website: 'janedoe.dev',
+    linkedin: 'linkedin.com/in/janedoe',
+    photo: 'https://i.pravatar.cc/150?u=janedoe',
   },
-  summary: 'Innovative and detail-oriented Frontend Developer with 3+ years of experience building and maintaining responsive and scalable web applications. Proficient in React, TypeScript, and modern JavaScript frameworks. Passionate about creating intuitive user interfaces and collaborating in agile environments to deliver high-quality software.',
+  summary:
+    'Innovative and results-driven Senior Frontend Developer with 8+ years of experience architecting and developing scalable, user-centric web applications. Proficient in React, TypeScript, and modern JavaScript frameworks. Passionate about creating seamless user experiences and leading high-performing engineering teams.',
   experience: [
     {
       id: uuidv4(),
-      jobTitle: 'Frontend Developer',
+      jobTitle: 'Senior Frontend Developer',
       company: 'Tech Solutions Inc.',
-      location: 'Palo Alto, CA',
-      startDate: 'Aug 2021',
+      location: 'San Francisco, CA',
+      startDate: 'Jan 2020',
       endDate: 'Present',
       description: [
-        { id: uuidv4(), point: 'Developed and maintained the main customer-facing dashboard using React and TypeScript, resulting in a 20% increase in user engagement.' },
-        { id: uuidv4(), point: 'Collaborated with UX/UI designers to implement a new design system, improving code reusability and reducing development time by 15%.' },
-        { id: uuidv4(), point: 'Optimized application performance by code-splitting and lazy-loading components, which decreased initial load time by 300ms.' },
+        { id: uuidv4(), point: 'Led the development of a new design system, resulting in a 30% increase in development velocity and ensuring UI consistency across all products.' },
+        { id: uuidv4(), point: 'Mentored a team of 4 junior developers, fostering a culture of collaboration and continuous learning.' },
+        { id: uuidv4(), point: 'Optimized application performance by implementing code-splitting and lazy loading, reducing initial load time by 50%.' },
       ],
     },
     {
-        id: uuidv4(),
-        jobTitle: 'Junior Web Developer',
-        company: 'Web Innovators LLC',
-        location: 'San Jose, CA',
-        startDate: 'Jun 2020',
-        endDate: 'Jul 2021',
-        description: [
-          { id: uuidv4(), point: 'Assisted in building responsive marketing websites for various clients using HTML, CSS, and JavaScript.' },
-          { id: uuidv4(), point: 'Integrated third-party APIs for analytics and customer support functionalities.' },
-        ],
-      },
+      id: uuidv4(),
+      jobTitle: 'Frontend Developer',
+      company: 'Web Innovators',
+      location: 'Palo Alto, CA',
+      startDate: 'Jun 2016',
+      endDate: 'Dec 2019',
+      description: [
+        { id: uuidv4(), point: 'Developed and maintained responsive user interfaces for high-traffic e-commerce websites using React and Redux.' },
+        { id: uuidv4(), point: 'Collaborated with UX/UI designers to translate wireframes and mockups into functional, pixel-perfect web pages.' },
+      ],
+    },
   ],
   education: [
     {
@@ -67,34 +68,48 @@ export const SAMPLE_RESUME_DATA: ResumeData = {
       degree: 'Bachelor of Science',
       major: 'Computer Science',
       gpa: '3.8',
-      startDate: 'Sep 2016',
-      endDate: 'May 2020',
+      startDate: '2012',
+      endDate: '2016',
     },
   ],
   skills: [
-    { id: uuidv4(), category: 'Programming Languages', names: 'JavaScript (ES6+), TypeScript, HTML5, CSS3/SASS' },
-    { id: uuidv4(), category: 'Frameworks & Libraries', names: 'React, Next.js, Redux, Tailwind CSS, Jest' },
-    { id: uuidv4(), category: 'Developer Tools', names: 'Git, Webpack, Docker, Vercel, Figma' },
+    {
+      id: uuidv4(),
+      category: 'Programming Languages',
+      names: 'JavaScript (ES6+), TypeScript, HTML5, CSS3/SASS',
+    },
+    {
+      id: uuidv4(),
+      category: 'Frameworks & Libraries',
+      names: 'React, Next.js, Redux, Tailwind CSS, Jest, React Testing Library',
+    },
+    {
+      id: uuidv4(),
+      category: 'Tools',
+      names: 'Git, Webpack, Babel, Figma, Jira',
+    },
   ],
   projects: [
     {
       id: uuidv4(),
-      name: 'Real-Time Chat Application',
-      technologies: 'React, Firebase, Tailwind CSS',
-      link: 'github.com/alexdoe/chat-app',
+      name: 'Project Portfolio Website',
+      technologies: 'Next.js, Tailwind CSS, Vercel',
+      link: 'janedoe.dev',
       description: [
-        { id: uuidv4(), point: 'Built a full-stack chat application featuring real-time messaging, user authentication, and multiple channels.' },
-        { id: uuidv4(), point: 'Implemented a clean, responsive UI with React and managed application state efficiently.' },
+          { id: uuidv4(), point: 'Designed and developed a personal portfolio to showcase projects and skills.' },
+          { id: uuidv4(), point: 'Implemented a fully responsive design ensuring optimal viewing on all devices.' },
       ],
     },
   ],
   certifications: [
-    { id: uuidv4(), name: 'AWS Certified Cloud Practitioner', issuer: 'Amazon Web Services', date: '2022' },
+      { id: uuidv4(), name: 'AWS Certified Cloud Practitioner', issuer: 'Amazon Web Services', date: '2022' }
   ],
-  awards: [],
+  awards: [
+      { id: uuidv4(), name: 'Developer of the Year', issuer: 'Tech Solutions Inc.', date: '2021', description: 'Awarded for outstanding contributions to the company\'s flagship product.' }
+  ],
   languages: [
-    { id: uuidv4(), name: 'English', proficiency: 'Native' },
-    { id: uuidv4(), name: 'Spanish', proficiency: 'Conversational' },
+      { id: uuidv4(), name: 'English', proficiency: 'Native' },
+      { id: uuidv4(), name: 'Spanish', proficiency: 'Conversational' },
   ],
   volunteerExperience: [],
 };

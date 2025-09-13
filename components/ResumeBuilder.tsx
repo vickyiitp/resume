@@ -1,8 +1,9 @@
-import React, { useState, useRef } from 'react';
-import { useReactToPrint } from 'react-to-print';
+import React, { useState } from 'react';
+import { TemplateType } from '../types';
 import type { ResumeData, AIFeedbackData, FormErrors } from '../types';
 import { INITIAL_RESUME_DATA, SAMPLE_RESUME_DATA } from '../constants';
-import { getResumeFeedback } from '../services/geminiService';
+import { getResumeFeedback, suggestJobTitles } from '../services/geminiService';
+import { useLocalStorage } from '../hooks/useLocalStorage';
 
 import ResumeForm from './ResumeForm';
 import ResumePreview from './ResumePreview';
@@ -13,6 +14,10 @@ import Input from './ui/Input';
 import { StepIndicator } from './ui/StepIndicator';
 import { DownloadIcon } from './icons/DownloadIcon';
 import { SparklesIcon } from './icons/SparklesIcon';
+import { RefreshIcon } from './icons/RefreshIcon';
+import { TemplateSelector } from './TemplateSelector';
+import { ClipboardListIcon } from './icons/ClipboardListIcon';
+
 
 const STEPS = [
     'Personal Details',
@@ -24,21 +29,25 @@ const STEPS = [
     'Additional Info'
 ];
 
-const ResumeBuilder: React.FC = () => {
-    const [resumeData, setResumeData] = useState<ResumeData>(INITIAL_RESUME_DATA);
+interface ResumeBuilderProps {
+  mobileView: 'editor' | 'preview';
+}
+
+const ResumeBuilder: React.FC<ResumeBuilderProps> = ({ mobileView }) => {
+    const [resumeData, setResumeData] = useLocalStorage<ResumeData>('resumeData', INITIAL_RESUME_DATA);
     const [currentStep, setCurrentStep] = useState(0);
     const [errors, setErrors] = useState<FormErrors>({});
     const [targetJob, setTargetJob] = useState<string>('Frontend Developer');
     const [feedback, setFeedback] = useState<AIFeedbackData | null>(null);
     const [isLoadingFeedback, setIsLoadingFeedback] = useState<boolean>(false);
     const [errorFeedback, setErrorFeedback] = useState<string | null>(null);
+    const [template, setTemplate] = useState<TemplateType>(TemplateType.MODERN);
+    const [suggestedJobs, setSuggestedJobs] = useState<string[]>([]);
+    const [isSuggestingJobs, setIsSuggestingJobs] = useState<boolean>(false);
 
-    const previewRef = useRef<HTMLDivElement>(null);
-
-    const handlePrint = useReactToPrint({
-        content: () => previewRef.current,
-        documentTitle: `${resumeData.personalDetails.fullName || 'Resume'}-resume`,
-    });
+    const handlePrint = () => {
+        window.print();
+    };
 
     const handleGetFeedback = async () => {
         if (!targetJob.trim()) {
@@ -48,6 +57,7 @@ const ResumeBuilder: React.FC = () => {
         setIsLoadingFeedback(true);
         setErrorFeedback(null);
         setFeedback(null);
+        setSuggestedJobs([]);
         try {
             const result = await getResumeFeedback(resumeData, targetJob);
             setFeedback(result);
@@ -62,18 +72,49 @@ const ResumeBuilder: React.FC = () => {
         }
     };
     
+    const handleSuggestJobs = async () => {
+        setIsSuggestingJobs(true);
+        setErrorFeedback(null);
+        setSuggestedJobs([]);
+        try {
+            const titles = await suggestJobTitles(resumeData);
+            setSuggestedJobs(titles);
+        } catch (err) {
+             if (err instanceof Error) {
+                setErrorFeedback(err.message);
+            } else {
+                setErrorFeedback('An unknown error occurred while suggesting titles.');
+            }
+        } finally {
+            setIsSuggestingJobs(false);
+        }
+    }
+
     const loadSampleData = () => {
         setResumeData(SAMPLE_RESUME_DATA);
         setCurrentStep(0);
         setErrors({});
     }
+    
+    const clearAllData = () => {
+        if (window.confirm('Are you sure you want to clear all data? This cannot be undone.')) {
+            setResumeData(INITIAL_RESUME_DATA);
+            setCurrentStep(0);
+            setErrors({});
+            setFeedback(null);
+            setSuggestedJobs([]);
+        }
+    }
 
     return (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
             {/* Left Column: Form */}
-            <div className="space-y-6">
-                <StepIndicator steps={STEPS} currentStep={currentStep} />
-                <div className="flex justify-end">
+            <div id="editor-column" className={`space-y-6 ${mobileView === 'preview' ? 'hidden' : ''} lg:block`}>
+                <StepIndicator steps={STEPS} currentStep={currentStep} onStepClick={setCurrentStep} />
+                <div className="flex justify-end gap-2">
+                    <Button onClick={clearAllData} variant="danger" icon={<RefreshIcon className="w-4 h-4" />}>
+                        Clear All Data
+                    </Button>
                     <Button onClick={loadSampleData} variant="secondary">Load Sample Data</Button>
                 </div>
                 <ResumeForm 
@@ -87,40 +128,64 @@ const ResumeBuilder: React.FC = () => {
             </div>
 
             {/* Right Column: Preview & AI Feedback */}
-            <div className="sticky top-24 space-y-6">
-                <Card>
+            <div className={`space-y-6 lg:sticky lg:top-24 ${mobileView === 'editor' ? 'hidden' : ''} lg:block`}>
+                <Card id="preview-card">
                     <div className="flex justify-between items-center mb-4">
                         <h2 className="text-xl font-bold">Resume Preview</h2>
                         <Button onClick={handlePrint} variant="secondary" icon={<DownloadIcon />}>
                             Download PDF
                         </Button>
                     </div>
-                    <div className="max-h-[80vh] overflow-y-auto bg-slate-50 p-2 rounded-md">
-                        <ResumePreview ref={previewRef} resumeData={resumeData} />
+                    <TemplateSelector selectedTemplate={template} onSelectTemplate={setTemplate} />
+                    <div id="resume-preview-wrapper" className="mt-4 max-h-[80vh] overflow-y-auto bg-slate-50 p-2 rounded-md">
+                        <ResumePreview resumeData={resumeData} template={template} />
                     </div>
                 </Card>
 
-                <Card>
-                    <h2 className="text-xl font-bold mb-4">AI Feedback</h2>
-                    <div className="space-y-4">
-                         <div className="flex flex-col sm:flex-row gap-2">
-                             <Input
-                                label="Target Job Title"
-                                value={targetJob}
-                                onChange={(e) => setTargetJob(e.target.value)}
-                                placeholder="e.g., Senior Software Engineer"
-                                className="flex-grow"
-                            />
-                            <Button onClick={handleGetFeedback} disabled={isLoadingFeedback} className="self-end h-fit" icon={<SparklesIcon className="w-4 h-4" />}>
-                                {isLoadingFeedback ? 'Analyzing...' : 'Get Feedback'}
-                            </Button>
+                <div id="ai-tools-column">
+                    <Card>
+                        <h2 className="text-xl font-bold mb-4">AI Analysis</h2>
+                        <div className="space-y-4">
+                             <div className="flex flex-col sm:flex-row gap-2">
+                                 <Input
+                                    label="Target Job Title"
+                                    value={targetJob}
+                                    onChange={(e) => setTargetJob(e.target.value)}
+                                    placeholder="e.g., Senior Software Engineer"
+                                    className="flex-grow"
+                                />
+                                 <div className="flex gap-2 self-end h-fit">
+                                    <Button onClick={handleSuggestJobs} disabled={isSuggestingJobs} variant="secondary" icon={<ClipboardListIcon className="w-4 h-4" />}>
+                                        {isSuggestingJobs ? 'Thinking...' : 'Suggest Titles'}
+                                    </Button>
+                                    <Button onClick={handleGetFeedback} disabled={isLoadingFeedback} icon={<SparklesIcon className="w-4 h-4" />}>
+                                        {isLoadingFeedback ? 'Analyzing...' : 'Get Feedback'}
+                                    </Button>
+                                 </div>
+                            </div>
+                            {suggestedJobs.length > 0 && (
+                                <div className="pt-2">
+                                    <p className="text-sm font-medium text-slate-600 mb-2">Suggested Job Titles:</p>
+                                    <div className="flex flex-wrap gap-2">
+                                        {suggestedJobs.map(job => (
+                                            <button key={job} onClick={() => setTargetJob(job)} className="px-3 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full hover:bg-blue-200 transition-colors">
+                                                {job}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                            {errorFeedback && <p className="text-red-500 text-sm mt-2" aria-live="polite">{errorFeedback}</p>}
                         </div>
-                        {errorFeedback && <p className="text-red-500 text-sm mt-2">{errorFeedback}</p>}
-                    </div>
-                    <div className="mt-4">
-                        <AIFeedback feedback={feedback} isLoading={isLoadingFeedback} />
-                    </div>
-                </Card>
+                        <div className="mt-4" aria-live="polite">
+                            <AIFeedback 
+                                feedback={feedback} 
+                                isLoading={isLoadingFeedback} 
+                                setResumeData={setResumeData}
+                            />
+                        </div>
+                    </Card>
+                </div>
             </div>
         </div>
     );
